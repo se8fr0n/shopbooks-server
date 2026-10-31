@@ -1,7 +1,7 @@
 # ShopBooks server
 
 Real database, user accounts with roles, locked records, tamper-evident audit log, and an
-offline-safe sync API. The offline frontend is the next step and goes in `public/`.
+offline-safe sync API. The app screens (offline-first, installable) are in `public/` and are served by this same server.
 
 ## What is enforced where
 
@@ -47,3 +47,12 @@ Add `DATABASE_URL`, `JWT_SECRET` and `PGSSL` as environment variables. Then conn
 4. If two devices sell the last item while offline, stock may go below zero. The server accepts the sale
    (the goods already left) and returns a warning for the manager to see.
 5. Sale numbers are given by the server, so an offline receipt shows a temporary number until it syncs.
+
+## First use
+
+1. Open your Render address. The first screen asks you to create the owner account (once only).
+2. Sign in. Add staff under Staff, choosing cashier, manager or owner.
+3. On a phone, open the address in Chrome and choose Install app or Add to Home screen.
+4. Sign in once with internet on every new device. After that it works offline and syncs by itself.
+
+Do not log out or clear browser data while the top bar says entries are waiting to sync.
