@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ShopBooks</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23161616'/%3E%3Cpath d='M9 8h10a4 4 0 010 8H9zm0 8h12a4 4 0 010 8H9z' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#d9d7da;--side:#fff;--card:#fff;--ink:#161616;--mut:#74717a;--line:#e6e4e8;--dark:#1b1b1b;--darkink:#fff;--bar:#1b1b1b;--barhi:#8d8b90;--good:#1f8a4c;--bad:#c23b3b;--field:#f4f3f5;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f0f10;--side:#18181a;--card:#1d1d20;--ink:#f1f0f2;--mut:#9a98a0;--line:#2c2c30;--dark:#2a2a2e;--bar:#e9e8ea;--barhi:#6c6a70;--field:#26262a}}
+:root[data-theme=dark]{--bg:#0f0f10;--side:#18181a;--card:#1d1d20;--ink:#f1f0f2;--mut:#9a98a0;--line:#2c2c30;--dark:#2a2a2e;--bar:#e9e8ea;--barhi:#6c6a70;--field:#26262a}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+.app{display:flex;min-height:100vh}
+aside{width:210px;background:var(--side);padding:20px 14px;display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;flex-shrink:0}
+.logo{font-weight:800;font-size:22px;letter-spacing:-.5px;padding:0 8px 18px}
+.nav{display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:8px;cursor:pointer;color:var(--mut);border:0;background:none;font:inherit;text-align:left;width:100%}
+.nav:hover{background:var(--field)}.nav.on{color:var(--ink);background:var(--field);font-weight:600}
+.nav svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.sp{flex:1}
+main{flex:1;padding:22px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+h1{font-size:24px;margin:0;font-weight:600}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%;outline:none}
+input:focus,select:focus{border-color:var(--mut)}
+.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn.pri{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.btn.sm{padding:5px 9px;font-size:12px}.btn.red{color:var(--bad)}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1.5fr 1fr}
+.card{background:var(--card);border-radius:16px;padding:16px}
+.card.dk{background:var(--dark);color:var(--darkink)}
+.lab{color:var(--mut);font-size:12px}.dk .lab{color:#bdbbc2}
+.big{font-size:24px;font-weight:700;margin:8px 0 4px}
+.sub{font-size:11px;color:var(--mut)}
+.chart{display:flex;align-items:flex-end;gap:14px;height:190px;padding:10px 4px 0;border-bottom:1px solid var(--line)}
+.col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px}
+.bar{width:100%;max-width:46px;background:var(--bar);border-radius:10px;min-height:4px}.bar.hi{background:var(--barhi)}
+.xl{display:flex;gap:14px;padding:6px 4px;font-size:11px;color:var(--mut)}.xl div{flex:1;text-align:center}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;color:var(--mut);font-weight:500;font-size:12px;padding:8px 6px;border-bottom:1px solid var(--line)}
+td{padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tw{overflow-x:auto}
+.tag{display:inline-block;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600;background:var(--field)}
+.tag.paid{background:var(--barhi);color:#fff}.tag.debt{background:var(--dark);color:#fff}.tag.void{text-decoration:line-through;color:var(--mut)}
+.mut{color:var(--mut)}.good{color:var(--good)}.bad{color:var(--bad)}
+.empty{padding:26px;text-align:center;color:var(--mut)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:14px;z-index:20}
+.box{background:var(--card);border-radius:16px;padding:20px;width:100%;max-width:560px;max-height:90vh;overflow:auto}
+.box h2{margin:0 0 14px;font-size:18px}
+.f{display:grid;gap:10px;grid-template-columns:1fr 1fr}.f .w{grid-column:1/-1}
+label{font-size:12px;color:var(--mut);display:block;margin-bottom:4px}
+.fab{display:none;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:10;box-shadow:0 4px 14px rgba(0,0,0,.35);padding:13px 18px}
+.lock{position:fixed;inset:0;background:var(--bg);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.lock .box{max-width:340px;text-align:center}
+.note{font-size:12px;color:var(--mut);margin-top:10px}
+.doc{background:#fff;color:#000;padding:24px;border-radius:8px}
+.doc table td,.doc table th{color:#000;border-color:#ddd}
+@media(max-width:900px){.g3{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.app{flex-direction:column}
+aside{width:100%;height:auto;position:static;flex-direction:row;overflow-x:auto;padding:10px;align-items:center}.logo{padding:0 10px 0 4px}.sp{display:none}.nav{width:auto;white-space:nowrap}main{padding:14px}.side-rec{display:none}.fab{display:block}}
+@media print{body *{visibility:hidden}.doc,.doc *{visibility:visible}.doc{position:absolute;left:0;top:0;width:100%}}
+</style></head><body>
+<div id="lock" class="lock" style="display:none"></div>
+<div class="app"><aside id="side"></aside><main id="main"></main></div>
+<div id="mod"></div>
+<button class="btn pri fab" onclick="saleForm()">Record sale</button>
+<script>
+const K='shopbooks_v1';
+let S={sales:[],pays:[],stock:[],exp:[],log:[],pin:''};
+try{const r=localStorage.getItem(K);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);
+const money=n=>'KSh '+Math.round(n).toLocaleString('en-KE');
+const today=()=>new Date().toISOString().slice(0,10);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const log=(a)=>{S.log.unshift({t:new Date().toISOString(),a});S.log=S.log.slice(0,500);save()};
+const paidOf=s=>s.paid+S.pays.filter(p=>p.sid===s.id).reduce((a,p)=>a+p.amt,0);
+const balOf=s=>s.void?0:s.total-paidOf(s);
+const live=()=>S.sales.filter(s=>!s.void);
+const ic={Dashboard:'M3 12l9-8 9 8M5 10v10h14V10',Sales:'M4 6h16M4 12h16M4 18h10',Debts:'M12 3v18M17 7H9.5a3 3 0 000 6h5a3 3 0 010 6H7',Stock:'M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7',Expenses:'M3 8h18v12H3zM7 8V4h10v4',Customers:'M16 11a4 4 0 10-8 0M4 21a8 8 0 0116 0',Documents:'M6 3h9l4 4v14H6zM9 12h7M9 16h7',Activity:'M3 12h4l3-8 4 16 3-8h4'};
+const views=Object.keys(ic);let view='Dashboard';
+function side(){$('#side').innerHTML='<div class="logo">ShopBooks</div><button class="btn pri side-rec" style="width:100%;margin-bottom:10px" onclick="saleForm()">Record sale</button>'+views.map(v=>`<button class="nav ${v==view?'on':''}" onclick="go('${v}')"><svg viewBox="0 0 24 24"><path d="${ic[v]}"/></svg>${v}</button>`).join('')+'<div class="sp"></div><button class="nav" onclick="showLock()"><svg viewBox="0 0 24 24"><path d="M6 11V8a6 6 0 0112 0v3M5 11h14v10H5z"/></svg>Lock now</button><button class="nav" onclick="settings()"><svg viewBox="0 0 24 24"><path d="M6 11V8a6 6 0 0112 0v3M5 11h14v10H5z"/></svg>Lock and backup</button>'}
+function go(v){view=v;side();render()}
+function head(t,btn){return `<div class="top"><h1>${t}</h1><div class="row">${btn||''}</div></div>`}
+function monthKey(d){return d.slice(0,7)}
+function render(){const m=$('#main');side();
+const fn={Dashboard:vDash,Sales:vSales,Debts:vDebts,Stock:vStock,Expenses:vExp,Customers:vCust,Documents:vDocs,Activity:vAct}[view];m.innerHTML=fn()}
+function vDash(){
+const mk=monthKey(today());const L=live();
+const sm=L.filter(s=>monthKey(s.date)==mk);const rev=sm.reduce((a,s)=>a+s.total,0);
+const ex=S.exp.filter(e=>monthKey(e.date)==mk).reduce((a,e)=>a+e.amt,0);
+const cogs=sm.reduce((a,s)=>a+s.items.reduce((b,i)=>b+(i.c||0)*i.q,0),0);
+const owed=L.reduce((a,s)=>a+balOf(s),0);const nd=L.filter(s=>balOf(s)>0).length;
+const sv=S.stock.reduce((a,i)=>a+i.q*i.buy,0);
+const months=[];for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);months.push(d.toISOString().slice(0,7))}
+const vals=months.map(k=>L.filter(s=>monthKey(s.date)==k).reduce((a,s)=>a+s.total,0));const mx=Math.max(...vals,1);const hi=vals.indexOf(Math.max(...vals));
+const mn=k=>new Date(k+'-15').toLocaleString('en',{month:'short'});
+const debtors={};L.forEach(s=>{const b=balOf(s);if(b>0)debtors[s.cust]=(debtors[s.cust]||0)+b});
+const dl=Object.entries(debtors).sort((a,b)=>b[1]-a[1]).slice(0,6);
+const low=S.stock.filter(i=>i.q<=(i.min||0));
+return head('Dashboard',`<button class="btn" onclick="saleForm()">New sale</button><button class="btn pri" onclick="saleForm()">Record sale</button>`.replace('<button class="btn" onclick="saleForm()">New sale</button>',''))+
+`<div class="grid g3"><div class="card dk"><div class="lab">Sales this month</div><div class="big">${money(rev)}</div><div class="sub" style="color:#bdbbc2">${sm.length} records</div></div>
+<div class="card"><div class="lab">Owed by customers</div><div class="big">${money(owed)}</div><div class="sub">${nd} open debts</div></div>
+<div class="card"><div class="lab">Expenses this month</div><div class="big">${money(ex)}</div><div class="sub">Gross profit ${money(rev-cogs)}</div></div></div>
+<div class="grid g2" style="margin-top:14px"><div class="card"><div class="lab" style="margin-bottom:6px">Sales, last 6 months</div>
+<div class="chart">${vals.map((v,i)=>`<div class="col"><div class="bar ${i==hi&&v>0?'hi':''}" style="height:${v/mx*100}%" title="${money(v)}"></div></div>`).join('')}</div>
+<div class="xl">${months.map(k=>`<div>${mn(k)}</div>`).join('')}</div></div>
+<div class="card"><div class="lab" style="margin-bottom:8px">Biggest debtors</div>${dl.length?dl.map(([c,b])=>`<div class="row" style="justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>${esc(c)}</span><b>${money(b)}</b></div>`).join(''):'<div class="empty">No debts</div>'}
+${low.length?`<div class="lab" style="margin:14px 0 6px">Low stock</div>`+low.slice(0,5).map(i=>`<div class="row" style="justify-content:space-between"><span>${esc(i.name)}</span><span class="bad">${i.q} left</span></div>`).join(''):''}</div></div>
+<div class="card" style="margin-top:14px"><div class="lab" style="margin-bottom:6px">Recent sales</div>${salesTable(S.sales.slice(0,6),true)}</div>`}
+function status(s){if(s.void)return '<span class="tag void">Void</span>';return balOf(s)>0?'<span class="tag debt">On debt</span>':'<span class="tag paid">Paid</span>'}
+function salesTable(list,mini){if(!list.length)return '<div class="empty">No sales recorded yet.</div>';
+return `<div class="tw"><table><tr><th>No.</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Balance</th><th>Status</th>${mini?'':'<th></th>'}</tr>`+list.map(s=>`<tr><td>${s.no}</td><td>${s.date}</td><td>${esc(s.cust)}</td><td>${esc(s.items.map(i=>i.q+' x '+i.n).join(', '))}</td><td>${money(s.total)}</td><td>${money(balOf(s))}</td><td>${status(s)}</td>${mini?'':`<td class="row"><button class="btn sm" onclick="docView('${s.id}')">Receipt</button>${s.void?'':`<button class="btn sm red" onclick="voidSale('${s.id}')">Void</button>`}</td>`}</tr>`).join('')+'</table></div>'}
+function vSales(){return head('Sales','<button class="btn pri" onclick="saleForm()">Record sale</button>')+`<div class="card">${salesTable(S.sales)}<div class="note">Saved records are locked. They cannot be edited or deleted. A mistake is corrected by voiding with a reason, then recording again.</div></div>`}
+function vDebts(){const L=live().filter(s=>balOf(s)>0);const tot=L.reduce((a,s)=>a+balOf(s),0);
+return head('Debts','<button class="btn pri" onclick="debtForm()">Add debt</button>')+`<div class="grid g4" style="margin-bottom:14px"><div class="card dk"><div class="lab">Total owed</div><div class="big">${money(tot)}</div></div></div><div class="card">${L.length?`<div class="tw"><table><tr><th>Customer</th><th>Phone</th><th>Sale</th><th>Date</th><th>Total</th><th>Paid</th><th>Balance</th><th></th></tr>`+L.map(s=>`<tr><td>${esc(s.cust)}</td><td>${esc(s.phone||'')}</td><td>${s.no}</td><td>${s.date}</td><td>${money(s.total)}</td><td>${money(paidOf(s))}</td><td><b>${money(balOf(s))}</b></td><td><button class="btn sm" onclick="payForm('${s.id}')">Add payment</button></td></tr>`).join('')+'</table></div>':'<div class="empty">Nothing owed. Sales with a balance show up here.</div>'}</div>`}
+function vStock(){return head('Stock','<button class="btn pri" onclick="stockForm()">Add item</button>')+`<div class="card">${S.stock.length?`<div class="tw"><table><tr><th>Item</th><th>Category</th><th>Qty</th><th>Buy</th><th>Sell</th><th></th></tr>`+S.stock.map(i=>`<tr><td>${esc(i.name)}</td><td>${esc(i.cat||'')}</td><td class="${i.q<=(i.min||0)?'bad':''}">${i.q}</td><td>${money(i.buy)}</td><td>${money(i.sell)}</td><td><button class="btn sm" onclick="restock('${i.id}')">Restock</button></td></tr>`).join('')+'</table></div>':'<div class="empty">No items yet. Add laptops, accessories and anything else you sell.</div>'}</div>`}
+function vExp(){return head('Expenses','<button class="btn pri" onclick="expForm()">Add expense</button>')+`<div class="card">${S.exp.length?`<div class="tw"><table><tr><th>Date</th><th>Category</th><th>Note</th><th>Amount</th></tr>`+S.exp.map(e=>`<tr><td>${e.date}</td><td>${esc(e.cat)}</td><td>${esc(e.note||'')}</td><td>${money(e.amt)}</td></tr>`).join('')+'</table></div><div class="note">Expense records are locked once saved.</div>':'<div class="empty">No expenses recorded.</div>'}</div>`}
+function vCust(){const c={};S.sales.filter(s=>!s.void).forEach(s=>{const x=c[s.cust]||(c[s.cust]={phone:s.phone,n:0,t:0,b:0});x.n++;x.t+=s.total;x.b+=balOf(s);if(s.phone)x.phone=s.phone});
+const e=Object.entries(c);return head('Customers')+`<div class="card">${e.length?`<div class="tw"><table><tr><th>Name</th><th>Phone</th><th>Purchases</th><th>Total bought</th><th>Owes</th></tr>`+e.map(([n,x])=>`<tr><td>${esc(n)}</td><td>${esc(x.phone||'')}</td><td>${x.n}</td><td>${money(x.t)}</td><td class="${x.b>0?'bad':''}">${money(x.b)}</td></tr>`).join('')+'</table></div>':'<div class="empty">Customers appear automatically from sales.</div>'}</div>`}
+function vDocs(){return head('Documents')+`<div class="card">${S.sales.length?`<div class="tw"><table><tr><th>Document</th><th>Customer</th><th>Date</th><th></th></tr>`+S.sales.map(s=>`<tr><td>Receipt ${s.no}</td><td>${esc(s.cust)}</td><td>${s.date}</td><td><button class="btn sm" onclick="docView('${s.id}')">Open and print</button></td></tr>`).join('')+'</table></div>':'<div class="empty">Receipts and statements are created from your sales.</div>'}</div>`}
+function vAct(){return head('Activity log')+`<div class="card">${S.log.length?`<div class="tw"><table><tr><th>Time</th><th>Action</th></tr>`+S.log.map(l=>`<tr><td class="mut">${new Date(l.t).toLocaleString('en-KE')}</td><td>${esc(l.a)}</td></tr>`).join('')+'</table></div>':'<div class="empty">Every record, payment and void is logged here.</div>'}</div>`}
+/* modals */
+function modal(h){$('#mod').innerHTML=`<div class="modal" onclick="if(event.target==this)closeM()"><div class="box">${h}</div></div>`}
+function closeM(){$('#mod').innerHTML=''}
+let rows=1;
+function saleForm(){rows=1;modal(`<h2>Record sale</h2><div class="f"><div><label>Customer</label><input id="c" placeholder="Name"></div><div><label>Phone</label><input id="ph" placeholder="Optional"></div></div><div id="rw" style="margin-top:12px">${saleRow(0)}</div><button class="btn sm" style="margin-top:8px" onclick="addRow()">Add another item</button>
+<div class="f" style="margin-top:12px"><div><label>Amount paid now (KSh)</label><input id="pd" type="number" min="0" placeholder="0"></div><div><label>Total</label><input id="tt" disabled></div></div><div class="note" id="dn">Anything unpaid is saved as a debt.</div>
+<div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveSale()">Save and lock</button></div>`)}
+function saleRow(i){return `<div class="f" style="margin-bottom:8px"><div class="w"><select id="s${i}" onchange="pick(${i})"><option value="">Item not in stock list</option>${S.stock.map(s=>`<option value="${s.id}">${esc(s.name)} (${s.q} in stock)</option>`).join('')}</select></div><div><input id="n${i}" placeholder="Item name"></div><div class="row"><input id="q${i}" type="number" min="1" value="1" style="width:70px" oninput="tot()"><input id="p${i}" type="number" min="0" placeholder="Price" oninput="tot()"></div></div>`}
+function addRow(){const d=document.createElement('div');d.innerHTML=saleRow(rows);$('#rw').appendChild(d.firstChild);rows++}
+function pick(i){const s=S.stock.find(x=>x.id==$('#s'+i).value);if(s){$('#n'+i).value=s.name;$('#p'+i).value=s.sell}tot()}
+function tot(){let t=0;for(let i=0;i<rows;i++)t+=(+$('#q'+i).value||0)*(+$('#p'+i).value||0);$('#tt').value=money(t);return t}
+function saveSale(){const cust=$('#c').value.trim();if(!cust)return alert('Enter the customer name');
+const items=[];for(let i=0;i<rows;i++){const n=$('#n'+i).value.trim(),q=+$('#q'+i).value,p=+$('#p'+i).value,sid=$('#s'+i).value;if(!n||!q||!p)continue;const st=S.stock.find(x=>x.id==sid);if(st&&st.q<q)return alert('Only '+st.q+' of '+st.name+' in stock');items.push({n,q,p,sid,c:st?st.buy:0})}
+if(!items.length)return alert('Add at least one item with a price');
+const total=items.reduce((a,i)=>a+i.q*i.p,0);let paid=+$('#pd').value||0;if(paid>total)paid=total;
+items.forEach(i=>{const st=S.stock.find(x=>x.id==i.sid);if(st)st.q-=i.q});
+const s={id:uid(),no:'S'+String(S.sales.length+1).padStart(4,'0'),date:today(),cust,phone:$('#ph').value.trim(),items,total,paid,void:false};
+S.sales.unshift(s);log(`Sale ${s.no} for ${cust}, ${money(total)}, paid ${money(paid)}`);closeM();render()}
+function voidSale(id){const s=S.sales.find(x=>x.id==id);const r=prompt('Reason for voiding '+s.no+'? This cannot be undone.');if(!r)return;
+s.void=true;s.reason=r;s.items.forEach(i=>{const st=S.stock.find(x=>x.id==i.sid);if(st)st.q+=i.q});log(`Voided ${s.no}: ${r}`);render()}
+function payForm(id){const s=S.sales.find(x=>x.id==id);modal(`<h2>Payment from ${esc(s.cust)}</h2><div class="note" style="margin:0 0 10px">Balance on ${s.no}: ${money(balOf(s))}</div><label>Amount (KSh)</label><input id="pa" type="number" min="1"><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">Cancel</button><button class="btn pri" onclick="savePay('${id}')">Save payment</button></div>`)}
+function savePay(id){const s=S.sales.find(x=>x.id==id);const a=+$('#pa').value;if(!a||a>balOf(s))return alert('Enter an amount up to the balance');S.pays.push({id:uid(),sid:id,date:today(),amt:a});log(`Payment ${money(a)} on ${s.no} from ${s.cust}`);closeM();render()}
+function stockForm(){modal(`<h2>Add stock item</h2><div class="f"><div class="w"><label>Name</label><input id="a"></div><div><label>Category</label><input id="b" placeholder="Laptops, accessories"></div><div><label>Quantity</label><input id="q" type="number" min="0"></div><div><label>Buying price</label><input id="by" type="number" min="0"></div><div><label>Selling price</label><input id="sl" type="number" min="0"></div><div><label>Low stock alert at</label><input id="mn" type="number" min="0" value="2"></div></div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveStock()">Save</button></div>`)}
+function saveStock(){const name=$('#a').value.trim();if(!name)return alert('Enter a name');S.stock.push({id:uid(),name,cat:$('#b').value,q:+$('#q').value||0,buy:+$('#by').value||0,sell:+$('#sl').value||0,min:+$('#mn').value||0});log('Added stock item '+name);closeM();render()}
+function restock(id){const i=S.stock.find(x=>x.id==id);const n=+prompt('Quantity received for '+i.name+'?');if(!n||n<1)return;i.q+=n;log(`Restocked ${i.name} +${n}`);render()}
+function expForm(){modal(`<h2>Add expense</h2><div class="f"><div><label>Category</label><select id="ec"><option>Rent</option><option>Transport</option><option>Salaries</option><option>Electricity and internet</option><option>Supplies</option><option>Other</option></select></div><div><label>Amount (KSh)</label><input id="ea" type="number" min="1"></div><div class="w"><label>Note</label><input id="en"></div></div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveExp()">Save and lock</button></div>`)}
+function saveExp(){const a=+$('#ea').value;if(!a)return alert('Enter an amount');S.exp.unshift({id:uid(),date:today(),cat:$('#ec').value,amt:a,note:$('#en').value});log(`Expense ${$('#ec').value} ${money(a)}`);closeM();render()}
+function docView(id){const s=S.sales.find(x=>x.id==id);const pays=S.pays.filter(p=>p.sid==id);
+modal(`<div class="doc"><h2 style="margin:0">ShopBooks Receipt ${s.no}</h2><div style="margin:6px 0 14px;color:#444">${s.date}<br>Customer: ${esc(s.cust)} ${esc(s.phone||'')}${s.void?'<br><b>VOID: '+esc(s.reason)+'</b>':''}</div><table><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr>${s.items.map(i=>`<tr><td>${esc(i.n)}</td><td>${i.q}</td><td>${money(i.p)}</td><td>${money(i.q*i.p)}</td></tr>`).join('')}</table><p><b>Total: ${money(s.total)}</b><br>Paid at sale: ${money(s.paid)}${pays.map(p=>`<br>Payment ${p.date}: ${money(p.amt)}`).join('')}<br><b>Balance: ${money(balOf(s))}</b></p><p style="color:#444;font-size:12px">Record locked. Reference ${s.id}</p></div><div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn" onclick="closeM()">Close</button><button class="btn pri" onclick="window.print()">Print</button></div>`)}
+function debtForm(){modal(`<h2>Add debt</h2><div class="f"><div><label>Customer</label><input id="dc" placeholder="Name"></div><div><label>Phone</label><input id="dp" placeholder="Optional"></div><div class="w"><label>What was taken or what is it for</label><input id="dn2" placeholder="e.g. HP laptop, printer ink"></div><div><label>Amount owed (KSh)</label><input id="da" type="number" min="1"></div><div><label>Already paid (KSh)</label><input id="dd" type="number" min="0" placeholder="0"></div></div><div class="note">Saved as a locked record. Payments are added later from the Debts page.</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">Cancel</button><button class="btn pri" onclick="saveDebt()">Save debt</button></div>`)}
+function saveDebt(){const cust=$('#dc').value.trim(),n=$('#dn2').value.trim(),a=+$('#da').value;if(!cust||!n||!a)return alert('Enter the customer, what it is for, and the amount');let paid=+$('#dd').value||0;if(paid>=a)return alert('Already paid must be less than the amount owed');const s={id:uid(),no:'S'+String(S.sales.length+1).padStart(4,'0'),date:today(),cust,phone:$('#dp').value.trim(),items:[{n,q:1,p:a,sid:'',c:0}],total:a,paid,void:false};S.sales.unshift(s);log(`Debt ${s.no} added for ${cust}, ${money(a)}`);closeM();render()}
+/* lock and backup */
+async function hash(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('shopbooks'+p));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return btoa(p)}}
+function showLock(){const l=$('#lock');if(!S.pin){l.style.display='flex';l.innerHTML=`<div class="box"><h2>Set a PIN to protect ShopBooks</h2><input id="s1" type="password" inputmode="numeric" placeholder="New PIN (4 to 8 digits)"><input id="s2" type="password" inputmode="numeric" placeholder="Repeat PIN" style="margin-top:10px" onkeydown="if(event.key=='Enter')setupPin()"><button class="btn pri" style="width:100%;margin-top:12px" onclick="setupPin()">Save PIN and open</button><div class="note" id="le">Write the PIN down somewhere safe. If you forget it, you can only restore from a backup.</div></div>`;return}l.style.display='flex';l.innerHTML=`<div class="box"><h2>ShopBooks is locked</h2><input id="lp" type="password" inputmode="numeric" placeholder="Enter PIN" onkeydown="if(event.key=='Enter')unlock()"><button class="btn pri" style="width:100%;margin-top:12px" onclick="unlock()">Unlock</button><div class="note" id="le"></div></div>`}
+async function unlock(){if(await hash($('#lp').value)==S.pin){$('#lock').style.display='none'}else{$('#le').textContent='Wrong PIN'}}
+function settings(){modal(`<h2>Lock and backup</h2><label>${S.pin?'Change PIN':'Set a PIN'} (4 to 8 digits)</label><input id="np" type="password" inputmode="numeric"><div class="row" style="margin-top:10px"><button class="btn pri" onclick="setPin()">Save PIN</button>${S.pin?'<button class="btn" onclick="showLock();closeM()">Lock now</button>':''}</div><hr style="border:0;border-top:1px solid var(--line);margin:16px 0"><div class="row"><button class="btn" onclick="exportJ()">Download backup</button><button class="btn" onclick="exportC()">Export sales CSV</button><label class="btn" style="margin:0;cursor:pointer;color:var(--ink)">Restore backup<input type="file" accept=".json" style="display:none" onchange="importJ(this)"></label></div><div class="note">Data is stored in this browser on this device. Download a backup often, and before clearing browser data. Forgetting the PIN means restoring from a backup.</div><div class="row" style="margin-top:14px;justify-content:flex-end"><button class="btn" onclick="closeM()">Close</button></div>`)}
+async function setPin(){const p=$('#np').value;if(!/^\d{4,8}$/.test(p))return alert('PIN must be 4 to 8 digits');S.pin=await hash(p);log('PIN changed');save();closeM()}
+function dl(name,txt,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click()}
+function exportJ(){dl('shopbooks-backup-'+today()+'.json',JSON.stringify(S),'application/json');log('Backup downloaded')}
+function exportC(){const r=[['No','Date','Customer','Total','Paid','Balance','Status']].concat(S.sales.map(s=>[s.no,s.date,'"'+s.cust.replace(/"/g,'""')+'"',s.total,paidOf(s),balOf(s),s.void?'void':balOf(s)>0?'debt':'paid']));dl('sales-'+today()+'.csv',r.map(x=>x.join(',')).join('\n'),'text/csv')}
+function importJ(el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.sales)throw 0;if(!confirm('Replace current data with this backup?'))return;S=Object.assign({sales:[],pays:[],stock:[],exp:[],log:[],pin:''},d);save();closeM();render()}catch(e){alert('That file is not a ShopBooks backup')}};r.readAsText(f)}
+async function setupPin(){const a=$('#s1').value,b=$('#s2').value;if(!/^\d{4,8}$/.test(a))return $('#le').textContent='PIN must be 4 to 8 digits';if(a!==b)return $('#le').textContent='The two PINs do not match';S.pin=await hash(a);log('PIN created');save();$('#lock').style.display='none'}
+let idle;function resetIdle(){clearTimeout(idle);idle=setTimeout(()=>{if(S.pin&&$('#lock').style.display=='none')showLock()},300000)}
+['click','keydown','touchstart','mousemove'].forEach(e=>document.addEventListener(e,resetIdle));resetIdle();
+render();showLock();
+</script></body></html>
