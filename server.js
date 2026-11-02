@@ -108,11 +108,11 @@ app.get('/api/snapshot', auth(), wrap(async (req, res) => {
   const mgr = RANK[req.user.role] >= 2;
   const q = t => pool.query(t).then(r => r.rows);
   const [items, sales, lines, pays, exp] = await Promise.all([
-    q('SELECT * FROM items ORDER BY name'),
+    q('SELECT * FROM items WHERE NOT archived ORDER BY name'),
     q('SELECT s.*, c.name AS customer, c.phone FROM sales s JOIN customers c ON c.id=s.customer_id ORDER BY s.no DESC LIMIT 3000'),
     q('SELECT * FROM sale_items WHERE sale_id IN (SELECT id FROM sales ORDER BY no DESC LIMIT 3000)'),
-    q('SELECT * FROM payments WHERE sale_id IN (SELECT id FROM sales ORDER BY no DESC LIMIT 3000) ORDER BY created_at'),
-    mgr ? q('SELECT * FROM expenses ORDER BY date DESC, created_at DESC LIMIT 2000') : Promise.resolve([])
+    q('SELECT * FROM payments WHERE sale_id IN (SELECT id FROM sales ORDER BY no DESC LIMIT 3000) AND id NOT IN (SELECT entity_id FROM voids WHERE entity=\'payment\') ORDER BY created_at'),
+    mgr ? q("SELECT * FROM expenses WHERE id NOT IN (SELECT entity_id FROM voids WHERE entity='expense') ORDER BY date DESC, created_at DESC LIMIT 2000") : Promise.resolve([])
   ]);
   if (!mgr) { items.forEach(i => delete i.buy_price); lines.forEach(l => delete l.cost); }
   res.json({ server_time: new Date().toISOString(), user: req.user, items, sales, lines, payments: pays, expenses: exp });
@@ -157,7 +157,7 @@ async function payCreate(c, u, p) {
   const s = (await c.query('SELECT * FROM sales WHERE id=$1 FOR UPDATE', [p.sale_id])).rows[0];
   if (!s) throw new Error('Sale not found');
   if (s.status !== 'active') throw new Error('That sale was voided');
-  const got = (await c.query('SELECT COALESCE(sum(amount),0) a FROM payments WHERE sale_id=$1', [s.id])).rows[0].a;
+  const got = (await c.query('SELECT COALESCE(sum(amount),0) a FROM payments WHERE sale_id=$1 AND id NOT IN (SELECT entity_id FROM voids WHERE entity=\'payment\')', [s.id])).rows[0].a;
   const amt = +p.amount, bal = Math.round((s.total - s.paid - got) * 100) / 100;
   if (!(amt > 0) || amt > bal + 0.001) throw new Error('Payment must be above 0 and not more than the balance of ' + bal);
   await c.query('INSERT INTO payments(id,sale_id,amount,method,created_by) VALUES ($1,$2,$3,$4,$5)', [p.id, s.id, amt, String(p.method || 'cash').slice(0, 20), u.id]);
@@ -239,11 +239,30 @@ async function saleEdit(c, u, p) {
   return out;
 }
 
+async function voidRecord(c, u, entity, table, id, reason, p) {
+  reason = String(reason || '').trim();
+  if (reason.length < 3) throw new Error('A reason is required to delete');
+  if (!(await c.query('SELECT 1 FROM ' + table + ' WHERE id=$1', [id])).rows[0]) throw new Error('Record not found');
+  if ((await c.query('SELECT 1 FROM voids WHERE entity=$1 AND entity_id=$2', [entity, id])).rows[0]) throw new Error('Already deleted');
+  await c.query('INSERT INTO voids(id,entity,entity_id,reason,user_id) VALUES ($1,$2,$3,$4,$5)', [crypto.randomUUID(), entity, id, reason, u.id]);
+  await audit(c, u, entity + '.delete', entity, id, { reason, ...p });
+  return { ok: true };
+}
+const payVoid = async (c, u, p) => voidRecord(c, u, 'payment', 'payments', p.payment_id, p.reason, {});
+const expVoid = async (c, u, p) => voidRecord(c, u, 'expense', 'expenses', p.expense_id, p.reason, {});
+async function itemArchive(c, u, p) {
+  const r = await c.query('UPDATE items SET archived=true WHERE id=$1 RETURNING name', [p.item_id]);
+  if (!r.rows[0]) throw new Error('Item not found');
+  await audit(c, u, 'item.delete', 'item', p.item_id, { name: r.rows[0].name });
+  return { ok: true };
+}
+
 const OPS = {
   'sale.create': ['cashier', saleCreate], 'payment.create': ['cashier', payCreate],
   'sale.void': ['manager', saleVoid], 'item.create': ['manager', itemCreate],
   'item.restock': ['manager', restock], 'expense.create': ['manager', expCreate],
-  'item.update': ['manager', itemUpdate], 'stock.adjust': ['manager', stockAdjust], 'sale.edit': ['manager', saleEdit]
+  'item.update': ['manager', itemUpdate], 'stock.adjust': ['manager', stockAdjust], 'sale.edit': ['manager', saleEdit],
+  'payment.void': ['manager', payVoid], 'expense.void': ['manager', expVoid], 'item.archive': ['manager', itemArchive]
 };
 
 app.post('/api/sync/push', auth(), wrap(async (req, res) => {
@@ -276,8 +295,8 @@ app.get('/api/reports/summary', auth('manager'), wrap(async (req, res) => {
   const a = (await pool.query(`SELECT COALESCE(sum(s.total),0) sales,
       COALESCE(sum((SELECT sum(l.cost*l.qty) FROM sale_items l WHERE l.sale_id=s.id)),0) cost, count(*)::int count
       FROM sales s WHERE s.status='active' AND to_char(s.date,'YYYY-MM')=$1`, [m])).rows[0];
-  const e = (await pool.query("SELECT COALESCE(sum(amount),0) t FROM expenses WHERE to_char(date,'YYYY-MM')=$1", [m])).rows[0].t;
-  const owed = (await pool.query(`SELECT COALESCE(sum(s.total - s.paid - COALESCE((SELECT sum(amount) FROM payments p WHERE p.sale_id=s.id),0)),0) t
+  const e = (await pool.query("SELECT COALESCE(sum(amount),0) t FROM expenses WHERE to_char(date,'YYYY-MM')=$1 AND id NOT IN (SELECT entity_id FROM voids WHERE entity='expense')", [m])).rows[0].t;
+  const owed = (await pool.query(`SELECT COALESCE(sum(s.total - s.paid - COALESCE((SELECT sum(amount) FROM payments p WHERE p.sale_id=s.id AND p.id NOT IN (SELECT entity_id FROM voids WHERE entity='payment')),0)),0) t
       FROM sales s WHERE s.status='active'`)).rows[0].t;
   res.json({ month: m, sales: a.sales, count: a.count, gross_profit: a.sales - a.cost, expenses: e, net: a.sales - a.cost - e, owed });
 }));
