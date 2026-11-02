@@ -146,7 +146,7 @@ async function saleCreate(c, u, p) {
     total += qty * price; lines.push([nm, qty, price, cost, iid]);
   }
   const paid = Math.min(Math.max(+p.paid || 0, 0), total);
-  const s = (await c.query('INSERT INTO sales(id,customer_id,date,total,paid,created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING no', [p.id, cu.id, okDate(p.date), total, paid, u.id])).rows[0];
+  const s = (await c.query('INSERT INTO sales(id,customer_id,date,total,paid,created_by,replaces) VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING no', [p.id, cu.id, okDate(p.date), total, paid, u.id, isUuid(p.replaces) ? p.replaces : null])).rows[0];
   for (const l of lines) await c.query('INSERT INTO sale_items(id,sale_id,name,qty,price,cost,item_id) VALUES ($1,$2,$3,$4,$5,$6,$7)', [crypto.randomUUID(), p.id, ...l]);
   await audit(c, u, 'sale.create', 'sale', p.id, { no: s.no, customer: name, total, paid });
   return { id: p.id, no: s.no, warnings };
@@ -209,10 +209,41 @@ async function expCreate(c, u, p) {
   return { id: p.id };
 }
 
+async function itemUpdate(c, u, p) {
+  const name = String(p.name || '').trim(); if (!name) throw new Error('Item name is required');
+  const r = await c.query('UPDATE items SET name=$2,category=$3,buy_price=$4,sell_price=$5,min_qty=$6 WHERE id=$1 RETURNING id',
+    [p.item_id, name, String(p.category || ''), Math.max(+p.buy_price || 0, 0), Math.max(+p.sell_price || 0, 0), Math.max(Math.floor(+p.min_qty || 0), 0)]);
+  if (!r.rows[0]) throw new Error('Item not found');
+  await audit(c, u, 'item.update', 'item', p.item_id, { name, buy_price: +p.buy_price || 0, sell_price: +p.sell_price || 0 });
+  return { ok: true };
+}
+
+async function stockAdjust(c, u, p) {
+  const n = Math.trunc(+p.change), reason = String(p.reason || '').trim();
+  if (!n) throw new Error('Enter a quantity change above or below 0');
+  if (reason.length < 3) throw new Error('A reason is required');
+  const r = await c.query('UPDATE items SET qty=qty+$1 WHERE id=$2 RETURNING name', [n, p.item_id]);
+  if (!r.rows[0]) throw new Error('Item not found');
+  await mv(c, p.item_id, n, 'adjust: ' + reason.slice(0, 80), null, u);
+  await audit(c, u, 'stock.adjust', 'item', p.item_id, { name: r.rows[0].name, change: n, reason });
+  return { ok: true };
+}
+
+// Edit = void the old sale (with reason) and create the corrected one linked to it, in one transaction.
+async function saleEdit(c, u, p) {
+  const reason = String(p.reason || '').trim();
+  if (reason.length < 3) throw new Error('A reason is required to edit a sale');
+  await saleVoid(c, u, { sale_id: p.sale_id, reason: 'Edited: ' + reason });
+  const out = await saleCreate(c, u, { ...(p.new || {}), replaces: p.sale_id });
+  await audit(c, u, 'sale.edit', 'sale', out.id, { replaced: p.sale_id, newNo: out.no, reason });
+  return out;
+}
+
 const OPS = {
   'sale.create': ['cashier', saleCreate], 'payment.create': ['cashier', payCreate],
   'sale.void': ['manager', saleVoid], 'item.create': ['manager', itemCreate],
-  'item.restock': ['manager', restock], 'expense.create': ['manager', expCreate]
+  'item.restock': ['manager', restock], 'expense.create': ['manager', expCreate],
+  'item.update': ['manager', itemUpdate], 'stock.adjust': ['manager', stockAdjust], 'sale.edit': ['manager', saleEdit]
 };
 
 app.post('/api/sync/push', auth(), wrap(async (req, res) => {
